@@ -27,46 +27,46 @@ func ws(ctx *Context) http.HandlerFunc {
 
 		for {
 			// read incomming messages
-			clientReq := &cursus.Request{}
-			if err := conn.ReadJSON(clientReq); err != nil {
+			peerReq := &cursus.Request{}
+			if err := conn.ReadJSON(peerReq); err != nil {
 				log.Println(err)
 				return
 			}
 			// Here we need to select the corresponding topic.
-			switch clientReq.Action {
+			switch peerReq.Action {
 			case "hello":
 				peer := &cursus.Peer{
 					ID:     fmt.Sprintf("%d", &r),
 					Socket: conn,
 				}
 				log.Printf("Welcome %v\n", peer.ID)
-				// insert new client into corresponding topic map.
-				ctx.Rooms[clientReq.Topic].Subscribe <- peer
+				// insert new peer into corresponding topic map.
+				ctx.Rooms[peerReq.Topic].Subscribe <- peer
 			case "bye":
-				log.Printf("Bye client %d\n", &r)
-				ctx.Rooms[clientReq.Topic].Unsubscribe <- fmt.Sprintf("%d", &r)
+				log.Printf("Bye peer %d\n", &r)
+				ctx.Rooms[peerReq.Topic].Unsubscribe <- fmt.Sprintf("%d", &r)
 			case "create":
-				log.Printf("create %v\n", clientReq)
-				ctx.Rooms[clientReq.Topic].Broadcast <- &cursus.Action{
-					Type:    clientReq.Action,
-					Message: clientReq.Message,
+				log.Printf("create %v\n", peerReq)
+				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
+					Type:    peerReq.Action,
+					Message: peerReq.Message,
 				}
 			case "update":
-				log.Printf("update %v\n", clientReq)
-				ctx.Rooms[clientReq.Topic].Broadcast <- &cursus.Action{
-					Type:    clientReq.Action,
-					Message: clientReq.Message,
+				log.Printf("update %v\n", peerReq)
+				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
+					Type:    peerReq.Action,
+					Message: peerReq.Message,
 				}
 			case "delete":
-				log.Printf("delete %v\n", clientReq)
-				ctx.Rooms[clientReq.Topic].Broadcast <- &cursus.Action{
-					Type:    clientReq.Action,
-					Message: clientReq.Message,
+				log.Printf("delete %v\n", peerReq)
+				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
+					Type:    peerReq.Action,
+					Message: peerReq.Message,
 				}
 			}
 			// send response
-			clientResp := &cursus.Response{Message: "OK"}
-			if err := conn.WriteJSON(clientResp); err != nil {
+			peerResp := &cursus.Response{Message: "OK"}
+			if err := conn.WriteJSON(peerResp); err != nil {
 				log.Println(err)
 				return
 			}
