@@ -21,15 +21,15 @@ type Action struct {
 	Message string `json:"message,omitempty"`
 }
 
-type Client struct {
+type Peer struct {
 	ID     string
 	Socket *websocket.Conn
 	mu     sync.Mutex
 }
 
-func (c *Client) Send(v interface{}) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (p *Peer) Send(v interface{}) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-	return c.Socket.WriteJSON(v)
+	return p.Socket.WriteJSON(v)
 }

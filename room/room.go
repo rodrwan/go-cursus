@@ -8,10 +8,10 @@ import (
 
 // Room ...
 type Room struct {
-	clients map[string]*cursus.Client
-	topic   string
+	peers map[string]*cursus.Peer
+	topic string
 
-	Subscribe   chan *cursus.Client
+	Subscribe   chan *cursus.Peer
 	Unsubscribe chan string
 	Broadcast   chan *cursus.Action
 }
@@ -20,15 +20,15 @@ type Room struct {
 func (r *Room) Run() {
 	for {
 		select {
-		case client := <-r.Subscribe:
-			r.clients[client.ID] = client
+		case peer := <-r.Subscribe:
+			r.peers[peer.ID] = peer
 		case id := <-r.Unsubscribe:
-			delete(r.clients, id)
+			delete(r.peers, id)
 		case action := <-r.Broadcast:
 			log.Println("Send message to all peers connected to users")
 			log.Printf("[%s] -> %s\n", action.Type, action.Message)
-			log.Printf("Message was sent to %d peers", len(r.clients))
-			for _, client := range r.clients {
+			log.Printf("Message was sent to %d peers", len(r.peers))
+			for _, client := range r.peers {
 				client.Send(&cursus.Response{
 					Message: action.Message,
 				})
@@ -37,12 +37,13 @@ func (r *Room) Run() {
 	}
 }
 
+// New ...
 func New(topic string) *Room {
 	return &Room{
-		topic:   topic,
-		clients: make(map[string]*cursus.Client),
+		topic: topic,
+		peers: make(map[string]*cursus.Peer),
 
-		Subscribe:   make(chan *cursus.Client),
+		Subscribe:   make(chan *cursus.Peer),
 		Unsubscribe: make(chan string),
 		Broadcast:   make(chan *cursus.Action),
 	}

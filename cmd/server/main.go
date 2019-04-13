@@ -35,13 +35,13 @@ func ws(ctx *Context) http.HandlerFunc {
 			// Here we need to select the corresponding topic.
 			switch clientReq.Action {
 			case "hello":
-				clt := &cursus.Client{
+				peer := &cursus.Peer{
 					ID:     fmt.Sprintf("%d", &r),
 					Socket: conn,
 				}
-				log.Printf("Welcome %v\n", clt)
+				log.Printf("Welcome %v\n", peer.ID)
 				// insert new client into corresponding topic map.
-				ctx.Rooms[clientReq.Topic].Subscribe <- clt
+				ctx.Rooms[clientReq.Topic].Subscribe <- peer
 			case "bye":
 				log.Printf("Bye client %d\n", &r)
 				ctx.Rooms[clientReq.Topic].Unsubscribe <- fmt.Sprintf("%d", &r)
