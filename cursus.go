@@ -1,40 +1,35 @@
 package cursus
 
 import (
-	"time"
+	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
-// Topic ...
-type Topic string
-
-// Message ...
-type Message struct {
-	Data      string
-	Timestamp time.Time
-}
-
-// Service ...
-type Service interface {
-	Run()
-	Init()
-
-	AddPublisher(Topic, Publisher)
-	AddSubscruber(Topic, Subscriber)
-	Emit(Topic, Message)
-}
-
-// SubscriptionRequest ...
-type SubscriptionRequest struct {
-	Topic Topic `json:"topic,omitempty"`
-}
-
-// UnsubscriptionRequest ...
-type UnsubscriptionRequest struct {
-	Topic Topic `json:"topic,omitempty"`
-}
-
-// PublishRequest ...
-type PublishRequest struct {
-	Topic   Topic  `json:"topic,omitempty"`
+type Request struct {
+	Action  string `json:"action,omitempty"`
+	Topic   string `json:"topic,omitempty"`
 	Message string `json:"message,omitempty"`
+}
+
+type Response struct {
+	Message string `json:"message,omitempty"`
+}
+
+type Action struct {
+	Type    string `json:"type,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+type Peer struct {
+	ID     string
+	Socket *websocket.Conn
+	mu     sync.Mutex
+}
+
+func (p *Peer) Send(v interface{}) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	return p.Socket.WriteJSON(v)
 }
