@@ -27,6 +27,7 @@ func (r *Room) Run() {
 		case action := <-r.Broadcast:
 			for _, client := range r.peers {
 				msg := &cursus.Response{
+					Type:    action.Type,
 					Message: action.Message,
 				}
 				client.Send(msg)

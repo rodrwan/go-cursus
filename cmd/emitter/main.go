@@ -2,14 +2,15 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
-	"github.com/Finciero/cursus/client"
+	"github.com/Finciero/cursus/emitter"
 )
 
+var addr = flag.String("addr", "localhost:8080", "http service address")
 var topic = flag.String("topic", "users", "topic to subscribe")
 
 func main() {
@@ -19,17 +20,21 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	action, err := client.New(*topic)
+	emit, err := emitter.New(*topic)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	ticker := time.NewTicker(time.Second * 5)
+	defer ticker.Stop()
+
 	for {
 		select {
-		case act := <-action:
-			log.Printf("message: %s\n", act.Message)
+		case t := <-ticker.C:
+			message := t.String()
+			emit.Emit(message)
 		case <-interrupt:
-			fmt.Println("bye bye")
+			emit.Disconnect()
 			return
 		}
 	}

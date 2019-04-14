@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"github.com/Finciero/cursus"
 	"github.com/Finciero/cursus/room"
@@ -15,6 +19,32 @@ var upgrader websocket.Upgrader
 // Context ...
 type Context struct {
 	Rooms map[string]*room.Room
+}
+
+type subscription struct {
+	Room string `json:"room"`
+}
+
+func createRoom(ctx *Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return
+		}
+		defer r.Body.Close()
+
+		var ss subscription
+		if err := json.Unmarshal(body, &ss); err != nil {
+			return
+		}
+
+		newRoom := room.New(ss.Room)
+		go newRoom.Run()
+
+		ctx.Rooms[ss.Room] = newRoom
+
+		w.WriteHeader(http.StatusCreated)
+	}
 }
 
 func ws(ctx *Context) http.HandlerFunc {
@@ -46,39 +76,29 @@ func ws(ctx *Context) http.HandlerFunc {
 				log.Printf("Bye %d\n", &r)
 				ctx.Rooms[peerReq.Topic].Unsubscribe <- fmt.Sprintf("%d", &r)
 			case "create":
-				log.Printf("create %v\n", peerReq)
 				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
 					Type:    peerReq.Action,
 					Message: peerReq.Message,
 				}
-				continue
 			case "update":
-				log.Printf("update %v\n", peerReq)
 				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
 					Type:    peerReq.Action,
 					Message: peerReq.Message,
 				}
-				continue
 			case "delete":
-				log.Printf("delete %v\n", peerReq)
 				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
 					Type:    peerReq.Action,
 					Message: peerReq.Message,
 				}
-				continue
-			}
-			// send response
-			peerResp := &cursus.Response{Message: "OK"}
-			if err := conn.WriteJSON(peerResp); err != nil {
-				log.Println(err)
-				return
 			}
 		}
 	}
 }
 
 func main() {
-	mux := http.NewServeMux()
+	log.SetFlags(0)
+
+	mux := mux.NewRouter()
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		return true
 	}
@@ -95,7 +115,10 @@ func main() {
 	ctx := &Context{
 		Rooms: rooms,
 	}
+
 	mux.HandleFunc("/ws", ws(ctx))
+
+	mux.HandleFunc("/room", createRoom(ctx)).Methods("POST")
 
 	server := http.Server{
 		Addr:    ":8080",
