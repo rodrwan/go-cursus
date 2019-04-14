@@ -10,7 +10,7 @@ To run the broker we need to do the follow:
 $ go run cmd/broker/main.go
 ```
 
-# Concept behing this implementation
+# Concept behind this implementation
 
 - **topic**: A Topic is the name for a Room.
 - **action**: An action is an special keyword that emitter and receiver understand. An action is used to specify special action of your system, like, create, update or delete any record. (See example folder for clarifications).
