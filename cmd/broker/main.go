@@ -98,17 +98,7 @@ func ws(ctx *Context) server.HandlerFunc {
 			case "bye":
 				log.Printf("Bye %d\n", &r)
 				ctx.Rooms[peerReq.Topic].Unsubscribe <- fmt.Sprintf("%d", &r)
-			case "create":
-				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
-					Type:    peerReq.Action,
-					Message: peerReq.Message,
-				}
-			case "update":
-				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
-					Type:    peerReq.Action,
-					Message: peerReq.Message,
-				}
-			case "delete":
+			default:
 				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
 					Type:    peerReq.Action,
 					Message: peerReq.Message,
