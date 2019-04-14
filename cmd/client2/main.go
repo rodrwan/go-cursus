@@ -19,7 +19,7 @@ func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	action, conn, err := client.New(*topic)
+	action, err := client.New(*topic)
 	if err != nil {
 		log.Fatal(err)
 	}
