@@ -59,23 +59,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createUser(ctx *Context, w http.ResponseWriter, r *http.Request) (*Response, error) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer r.Body.Close()
-
-	if err := ctx.Emitter.Emit(cursus.CreateAction, string(body)); err != nil {
-		return nil, err
-	}
-
-	return &Response{
-		Data:   "OK",
-		Status: http.StatusCreated,
-	}, nil
-}
-
 var addr = flag.String("addr", ":8081", "service address")
 
 func main() {
@@ -108,6 +91,23 @@ func main() {
 	}()
 
 	graceful(server)
+}
+
+func createUser(ctx *Context, w http.ResponseWriter, r *http.Request) (*Response, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Body.Close()
+
+	if err := ctx.Emitter.Emit(cursus.CreateAction, string(body)); err != nil {
+		return nil, err
+	}
+
+	return &Response{
+		Data:   "OK",
+		Status: http.StatusCreated,
+	}, nil
 }
 
 func graceful(hs *http.Server) {
