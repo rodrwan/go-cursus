@@ -6,7 +6,9 @@ import (
 	"github.com/rodrwan/go-cursus"
 )
 
-// Room ...
+// Room reprensent a room.
+// A room is where peers live, and where incomming message
+// are distributed to the corresponing channel.
 type Room struct {
 	peers map[string]*cursus.Peer
 	topic string
@@ -16,7 +18,7 @@ type Room struct {
 	Broadcast   chan *cursus.Action
 }
 
-// Run ...
+// Run listen channels.
 func (r *Room) Run() {
 	for {
 		select {
@@ -37,7 +39,7 @@ func (r *Room) Run() {
 	}
 }
 
-// New ...
+// New returns a new Room.
 func New(topic string) *Room {
 	return &Room{
 		topic: topic,

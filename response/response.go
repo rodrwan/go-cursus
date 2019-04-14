@@ -19,6 +19,7 @@ func (r *Response) Write(rw http.ResponseWriter) error {
 	return json.NewEncoder(rw).Encode(r)
 }
 
+// New returns a Response with data.
 func New(data interface{}, status int) *Response {
 	return &Response{
 		Data:   data,
@@ -26,6 +27,7 @@ func New(data interface{}, status int) *Response {
 	}
 }
 
+// NewWithMeta returns a Response with data and meta.
 func NewWithMeta(data, meta interface{}, status int) *Response {
 	return &Response{
 		Data:   data,
@@ -34,6 +36,7 @@ func NewWithMeta(data, meta interface{}, status int) *Response {
 	}
 }
 
+// NewVoid returns a Response only with status.
 func NewVoid(status int) *Response {
 	return &Response{
 		Status: status,
