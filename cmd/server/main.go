@@ -39,11 +39,11 @@ func ws(ctx *Context) http.HandlerFunc {
 					ID:     fmt.Sprintf("%d", &r),
 					Socket: conn,
 				}
-				log.Printf("Welcome %v\n", peer.ID)
+				log.Printf("Welcome %s\n", peer.ID)
 				// insert new peer into corresponding topic map.
 				ctx.Rooms[peerReq.Topic].Subscribe <- peer
 			case "bye":
-				log.Printf("Bye peer %d\n", &r)
+				log.Printf("Bye %d\n", &r)
 				ctx.Rooms[peerReq.Topic].Unsubscribe <- fmt.Sprintf("%d", &r)
 			case "create":
 				log.Printf("create %v\n", peerReq)
@@ -51,18 +51,21 @@ func ws(ctx *Context) http.HandlerFunc {
 					Type:    peerReq.Action,
 					Message: peerReq.Message,
 				}
+				continue
 			case "update":
 				log.Printf("update %v\n", peerReq)
 				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
 					Type:    peerReq.Action,
 					Message: peerReq.Message,
 				}
+				continue
 			case "delete":
 				log.Printf("delete %v\n", peerReq)
 				ctx.Rooms[peerReq.Topic].Broadcast <- &cursus.Action{
 					Type:    peerReq.Action,
 					Message: peerReq.Message,
 				}
+				continue
 			}
 			// send response
 			peerResp := &cursus.Response{Message: "OK"}

@@ -33,3 +33,7 @@ func (p *Peer) Send(v interface{}) error {
 
 	return p.Socket.WriteJSON(v)
 }
+
+func (p *Peer) readPeer() {}
+
+func (p *Peer) writePeer() {}

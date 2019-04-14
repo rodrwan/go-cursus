@@ -13,6 +13,7 @@ import (
 )
 
 var addr = flag.String("addr", "localhost:8080", "http service address")
+var topic = flag.String("topic", "users", "topic to subscribe")
 
 func main() {
 	flag.Parse()
@@ -49,7 +50,7 @@ func main() {
 
 	clientReq := &cursus.Request{
 		Action:  "hello",
-		Topic:   "users",
+		Topic:   *topic,
 		Message: "client",
 	}
 	if err := c.WriteJSON(clientReq); err != nil {
@@ -64,7 +65,7 @@ func main() {
 		case t := <-ticker.C:
 			clientReq := &cursus.Request{
 				Action:  "create",
-				Topic:   "users",
+				Topic:   *topic,
 				Message: t.String(),
 			}
 			if err := c.WriteJSON(clientReq); err != nil {
@@ -74,7 +75,7 @@ func main() {
 		case <-interrupt:
 			clientReq := &cursus.Request{
 				Action: "bye",
-				Topic:  "users",
+				Topic:  *topic,
 			}
 			if err := c.WriteJSON(clientReq); err != nil {
 				log.Println("write:", err)
