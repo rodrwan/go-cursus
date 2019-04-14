@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/Finciero/cursus/emitter"
@@ -48,15 +49,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer receiver.Disconnect()
 
-	defer receiver.Conn.Close()
 	action, err := receiver.Listen()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
 
 	go func() {
 		for {
@@ -79,7 +77,7 @@ func main() {
 
 	mux.HandleFunc("/create", createAddress(&Context{}))
 
-	server := http.Server{
+	server := &http.Server{
 		Addr:    *addr,
 		Handler: mux,
 	}
@@ -89,11 +87,25 @@ func main() {
 		log.Fatal(server.ListenAndServe())
 	}()
 
-	<-interrupt
-	receiver.Disconnect()
+	graceful(server)
+}
 
-	ctx1, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func graceful(hs *http.Server) {
+	stop := make(chan os.Signal, 1)
+	timeout := 5 * time.Second
+
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	server.Shutdown(ctx1)
+	log.Printf("\nShutdown with timeout: %s\n", timeout)
+
+	if err := hs.Shutdown(ctx); err != nil {
+		log.Printf("Error: %v\n", err)
+	} else {
+		log.Println("Server stopped")
+	}
 }

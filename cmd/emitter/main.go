@@ -32,7 +32,7 @@ func main() {
 		select {
 		case t := <-ticker.C:
 			message := t.String()
-			emit.Emit(message)
+			emit.Emit("create", message)
 		case <-interrupt:
 			emit.Disconnect()
 			return

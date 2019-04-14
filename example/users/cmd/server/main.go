@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"os/user"
+	"syscall"
 	"time"
 
 	"github.com/Finciero/cursus/emitter"
@@ -34,7 +35,10 @@ func createUser(ctx *Context) http.HandlerFunc {
 			return
 		}
 
-		ctx.Emitter.Emit("create", string(body))
+		if err := ctx.Emitter.Emit("create", string(body)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
 	}
@@ -51,30 +55,42 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer emit.Disconnect()
 
 	ctx := &Context{
 		Emitter: emit,
 	}
 	mux.HandleFunc("/create", createUser(ctx)).Methods("POST")
 
-	server := http.Server{
+	server := &http.Server{
 		Addr:    *addr,
 		Handler: mux,
 	}
-
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
 
 	go func() {
 		log.Printf("Listening on http://0.0.0.0%s\n", *addr)
 		log.Fatal(server.ListenAndServe())
 	}()
 
-	<-interrupt
-	emit.Disconnect()
+	graceful(server)
+}
 
-	ctx1, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func graceful(hs *http.Server) {
+	stop := make(chan os.Signal, 1)
+	timeout := 5 * time.Second
+
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	server.Shutdown(ctx1)
+	log.Printf("\nShutdown with timeout: %s\n", timeout)
+
+	if err := hs.Shutdown(ctx); err != nil {
+		log.Printf("Error: %v\n", err)
+	} else {
+		log.Println("Server stopped")
+	}
 }

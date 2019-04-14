@@ -12,8 +12,9 @@ import (
 
 // Receiver represents a receiver of messages.
 type Receiver struct {
-	Conn   *websocket.Conn
-	Topic  string
+	Topic string
+
+	conn   *websocket.Conn
 	action chan *cursus.Action
 }
 
@@ -37,9 +38,9 @@ func New(topic string) (*Receiver, error) {
 	}
 
 	return &Receiver{
-		Conn:   conn,
-		Topic:  topic,
+		conn:   conn,
 		action: make(chan *cursus.Action),
+		Topic:  topic,
 	}, nil
 
 }
@@ -50,10 +51,9 @@ func (r *Receiver) Listen() (<-chan *cursus.Action, error) {
 		log.Println(">>> Listening message from socket")
 		for {
 			act := &cursus.Action{}
-			err := r.Conn.ReadJSON(act)
+			err := r.conn.ReadJSON(act)
 			if err != nil {
 				close(r.action)
-				r.Conn.Close()
 				return
 			}
 
@@ -70,11 +70,11 @@ func (r *Receiver) Disconnect() {
 		Action: "bye",
 		Topic:  r.Topic,
 	}
-	if err := r.Conn.WriteJSON(req); err != nil {
+	if err := r.conn.WriteJSON(req); err != nil {
 		log.Println("write:", err)
 		return
 	}
-	err := r.Conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := r.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		log.Println("write close:", err)
 		return

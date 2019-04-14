@@ -12,7 +12,7 @@ import (
 
 // Emitter represents a emitter of messages.
 type Emitter struct {
-	Conn  *websocket.Conn
+	conn  *websocket.Conn
 	Topic string
 }
 
@@ -36,7 +36,7 @@ func New(topic string) (*Emitter, error) {
 	}
 
 	return &Emitter{
-		Conn:  conn,
+		conn:  conn,
 		Topic: topic,
 	}, nil
 }
@@ -48,7 +48,7 @@ func (e *Emitter) Emit(action, message string) error {
 		Topic:   e.Topic,
 		Message: message,
 	}
-	if err := e.Conn.WriteJSON(clientReq); err != nil {
+	if err := e.conn.WriteJSON(clientReq); err != nil {
 		return err
 	}
 
@@ -61,11 +61,11 @@ func (e *Emitter) Disconnect() {
 		Action: "bye",
 		Topic:  e.Topic,
 	}
-	if err := e.Conn.WriteJSON(req); err != nil {
+	if err := e.conn.WriteJSON(req); err != nil {
 		log.Println("write:", err)
 		return
 	}
-	err := e.Conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := e.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		log.Println("write close:", err)
 		return
