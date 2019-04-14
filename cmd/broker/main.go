@@ -16,6 +16,11 @@ import (
 	"github.com/rodrwan/go-cursus/server"
 )
 
+// Context ...
+type Context struct {
+	Rooms map[string]*room.Room
+}
+
 var upgrader websocket.Upgrader
 
 var addr = flag.String("addr", ":8080", "service address")
