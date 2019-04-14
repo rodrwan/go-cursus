@@ -6,6 +6,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Allowed actions
+const (
+	CreateAction = "create"
+	UpdateAction = "update"
+	DeleteAction = "delete"
+)
+
 // Request ...
 type Request struct {
 	Action  string `json:"action,omitempty"`

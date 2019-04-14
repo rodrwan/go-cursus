@@ -2,40 +2,59 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/gorilla/websocket"
 	cursus "github.com/rodrwan/go-cursus"
+	"github.com/rodrwan/go-cursus/errors"
+	"github.com/rodrwan/go-cursus/response"
 	"github.com/rodrwan/go-cursus/room"
+	"github.com/rodrwan/go-cursus/server"
 )
 
 var upgrader websocket.Upgrader
 
-// Context ...
-type Context struct {
-	Rooms map[string]*room.Room
+var addr = flag.String("addr", ":8080", "service address")
+
+func main() {
+	flag.Parse()
+	log.SetFlags(0)
+
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		return true
+	}
+
+	rooms := make(map[string]*room.Room)
+	ctx := &Context{
+		Rooms: rooms,
+	}
+
+	srv := server.New(*addr)
+	srv.AddHandler("GET", "/ws", ws(ctx))
+	srv.AddHandler("POST", "/room", createRoom(ctx))
+
+	srv.ListenAndServe()
 }
 
 type subscription struct {
 	Room string `json:"room"`
 }
 
-func createRoom(ctx *Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func createRoom(ctx *Context) server.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) (*response.Response, error) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			return
+			return nil, errors.ErrInternalServerError(err)
 		}
 		defer r.Body.Close()
 
 		var ss subscription
 		if err := json.Unmarshal(body, &ss); err != nil {
-			return
+			return nil, errors.ErrInternalServerError(err)
 		}
 
 		newRoom := room.New(ss.Room)
@@ -43,24 +62,23 @@ func createRoom(ctx *Context) http.HandlerFunc {
 
 		ctx.Rooms[ss.Room] = newRoom
 
-		w.WriteHeader(http.StatusCreated)
+		log.Printf("Room [%s] was created", ss.Room)
+		return response.NewVoid(http.StatusCreated), nil
 	}
 }
 
-func ws(ctx *Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
+func ws(ctx *Context) server.HandlerFunc {
+	return func(rw http.ResponseWriter, r *http.Request) (*response.Response, error) {
+		conn, err := upgrader.Upgrade(rw, r, nil)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return nil, errors.ErrInternalServerError(err)
 		}
 
 		for {
 			// read incomming messages
 			peerReq := &cursus.Request{}
 			if err := conn.ReadJSON(peerReq); err != nil {
-				log.Println(err)
-				return
+				return response.NewVoid(http.StatusGone), nil
 			}
 			// Here we need to select the corresponding topic.
 			switch peerReq.Action {
@@ -93,37 +111,4 @@ func ws(ctx *Context) http.HandlerFunc {
 			}
 		}
 	}
-}
-
-func main() {
-	log.SetFlags(0)
-
-	mux := mux.NewRouter()
-	upgrader.CheckOrigin = func(r *http.Request) bool {
-		return true
-	}
-
-	rooms := make(map[string]*room.Room)
-	userRoom := room.New("users")
-	go userRoom.Run()
-
-	orderRoom := room.New("orders")
-	go orderRoom.Run()
-
-	rooms["users"] = userRoom
-	rooms["orders"] = orderRoom
-	ctx := &Context{
-		Rooms: rooms,
-	}
-
-	mux.HandleFunc("/ws", ws(ctx))
-
-	mux.HandleFunc("/room", createRoom(ctx)).Methods("POST")
-
-	server := http.Server{
-		Addr:    ":8080",
-		Handler: mux,
-	}
-
-	log.Fatal(server.ListenAndServe())
 }

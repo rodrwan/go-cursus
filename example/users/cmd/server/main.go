@@ -4,44 +4,76 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"os/user"
 	"syscall"
 	"time"
 
-	"github.com/rodrwan/go-cursus/emitter"
 	"github.com/gorilla/mux"
+	"github.com/rodrwan/go-cursus"
+	"github.com/rodrwan/go-cursus/emitter"
 )
 
 type Context struct {
 	Emitter *emitter.Emitter
 }
 
-func createUser(ctx *Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var user user.User
+type Response struct {
+	Data   interface{} `json:"data,omitempty"`
+	Meta   interface{} `json:"meta,omitempty"`
+	Status int         `json:"-"`
+}
 
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return
+func (r *Response) Write(rw http.ResponseWriter) error {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(r.Status)
+
+	return json.NewEncoder(rw).Encode(r)
+}
+
+// HandlerFunc function handler signature used by sigiriya application.
+type HandlerFunc func(*Context, http.ResponseWriter, *http.Request) (*Response, error)
+
+// Handler is an http.Handler that provides access to the Context to the given HandlerFunc.
+type Handler struct {
+	Ctx    *Context
+	Handle HandlerFunc
+}
+
+func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	resp, err := h.Handle(h.Ctx, rw, r)
+	if err != nil {
+		fmt.Println(err)
+		if err = json.NewEncoder(rw).Encode(err); err != nil {
+			log.Printf("[ERROR]: %v failed to encode error", err)
 		}
-		defer r.Body.Close()
-
-		if err := json.Unmarshal(body, &user); err != nil {
-			return
-		}
-
-		if err := ctx.Emitter.Emit("create", string(body)); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusCreated)
+		return
 	}
+
+	if err := resp.Write(rw); err != nil {
+		log.Printf("[ERROR]: %v, encoding response: %v", err, resp)
+	}
+}
+
+func createUser(ctx *Context, w http.ResponseWriter, r *http.Request) (*Response, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Body.Close()
+
+	if err := ctx.Emitter.Emit(cursus.CreateAction, string(body)); err != nil {
+		return nil, err
+	}
+
+	return &Response{
+		Data:   "OK",
+		Status: http.StatusCreated,
+	}, nil
 }
 
 var addr = flag.String("addr", ":8081", "service address")
@@ -57,10 +89,13 @@ func main() {
 	}
 	defer emit.Disconnect()
 
-	ctx := &Context{
-		Emitter: emit,
+	h := &Handler{
+		Ctx: &Context{
+			Emitter: emit,
+		},
+		Handle: createUser,
 	}
-	mux.HandleFunc("/create", createUser(ctx)).Methods("POST")
+	mux.Handle("/create", h).Methods("POST")
 
 	server := &http.Server{
 		Addr:    *addr,
