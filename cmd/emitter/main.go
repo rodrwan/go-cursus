@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/Finciero/cursus/emitter"
+	"github.com/rodrwan/go-cursus/emitter"
 )
 
 var addr = flag.String("addr", "localhost:8080", "http service address")

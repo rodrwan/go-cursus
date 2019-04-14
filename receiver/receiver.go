@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Finciero/cursus"
+	"github.com/rodrwan/go-cursus"
 	"github.com/gorilla/websocket"
 )
 

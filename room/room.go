@@ -3,7 +3,7 @@ package room
 import (
 	"log"
 
-	"github.com/Finciero/cursus"
+	"github.com/rodrwan/go-cursus"
 )
 
 // Room ...

@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/Finciero/cursus/receiver"
+	"github.com/rodrwan/go-cursus/receiver"
 )
 
 var topic = flag.String("topic", "users", "topic to subscribe")
@@ -23,7 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	defer receiver.Conn.Close()
+	defer receiver.Disconnect()
 	action, err := receiver.Listen()
 	if err != nil {
 		log.Fatal(err)

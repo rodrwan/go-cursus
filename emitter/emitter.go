@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Finciero/cursus"
 	"github.com/gorilla/websocket"
+	"github.com/rodrwan/go-cursus"
 )
 
 // Emitter represents a emitter of messages.

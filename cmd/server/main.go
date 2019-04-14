@@ -9,9 +9,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/Finciero/cursus"
-	"github.com/Finciero/cursus/room"
 	"github.com/gorilla/websocket"
+	cursus "github.com/rodrwan/go-cursus"
+	"github.com/rodrwan/go-cursus/room"
 )
 
 var upgrader websocket.Upgrader

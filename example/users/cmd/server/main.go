@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Finciero/cursus/emitter"
+	"github.com/rodrwan/go-cursus/emitter"
 	"github.com/gorilla/mux"
 )
 

@@ -1,5 +1,3 @@
-github.com/Finciero/cursus v0.0.0-20190414022432-5e8645830bce h1:KqO4sbyui7I+Qo6A677z9JaaN5UQBYQUlrnCEAm4E3Q=
-github.com/Finciero/cursus v0.0.0-20190414022432-5e8645830bce/go.mod h1:GSLwrg0RfGBDxGfbWOFeb9S7j1If2N5D0op6K6mhnTs=
 github.com/gorilla/mux v1.7.1 h1:Dw4jY2nghMMRsh1ol8dv1axHkDwMQK2DHerMNJsIpJU=
 github.com/gorilla/mux v1.7.1/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=

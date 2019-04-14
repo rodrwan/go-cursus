@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Finciero/cursus/emitter"
-	"github.com/Finciero/cursus/example/users"
-	"github.com/Finciero/cursus/receiver"
+	"github.com/rodrwan/go-cursus/emitter"
+	"github.com/rodrwan/go-cursus/example/users"
+	"github.com/rodrwan/go-cursus/receiver"
 )
 
 type Context struct {
