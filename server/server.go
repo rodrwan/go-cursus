@@ -42,13 +42,13 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Server ...
+// Server represents a server, this struct is used to join router with HTTP server.
 type Server struct {
 	Router *httprouter.Router
 	Server *http.Server
 }
 
-// AddHandler ...
+// AddHandler add new router.
 func (s *Server) AddHandler(method, path string, hf HandlerFunc) {
 	h := &Handler{
 		Handle: hf,
@@ -61,7 +61,7 @@ func (s *Server) AddHandler(method, path string, hf HandlerFunc) {
 	}
 }
 
-// ListenAndServe ...
+// ListenAndServe listen and serve server.
 func (s *Server) ListenAndServe() {
 
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
@@ -73,7 +73,7 @@ func (s *Server) ListenAndServe() {
 	log.Fatal(s.Server.ListenAndServe())
 }
 
-// New ...
+// New expose a new Server.
 func New(addr string) *Server {
 	router := httprouter.New()
 
