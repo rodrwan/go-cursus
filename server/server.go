@@ -45,7 +45,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // Server ...
 type Server struct {
 	Router *httprouter.Router
-	Serve  *http.Server
+	Server *http.Server
 }
 
 // AddHandler ...
@@ -67,10 +67,10 @@ func (s *Server) ListenAndServe() {
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
 
 	n.UseHandler(s.Router)
-	s.Serve.Handler = n
+	s.Server.Handler = n
 
-	log.Printf("Listening on: %s", s.Serve.Addr)
-	log.Fatal(s.Serve.ListenAndServe())
+	log.Printf("Listening on: %s", s.Server.Addr)
+	log.Fatal(s.Server.ListenAndServe())
 }
 
 // New ...
@@ -83,6 +83,6 @@ func New(addr string) *Server {
 
 	return &Server{
 		Router: router,
-		Serve:  server,
+		Server: server,
 	}
 }
